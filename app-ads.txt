@@ -1,0 +1,117 @@
+let popupTemplateModal = false
+
+    <Modal
+      bind:open={popupTemplateModal}
+      size="xl"
+      outsideclose
+      on:close={() => {
+        // 登録操作をしていない場合だけ先頭に戻す
+        if (!didRegisterTemplate) {
+          selectedDiseaseForPrompt = promptForDisease[0]
+        }
+        // 次回に備えて初期化
+        didRegisterTemplate = false
+      }}
+    >
+      <div class="px-6 pb-6">
+        <p class="text-sm font-semibold py-4 text-black">テンプレート名</p>
+        <Input type="text" placeholder="テンプレート名を入力してください" class="mb-4" bind:value={newTemplateName} />
+        <p class="text-sm font-semibold py-4 text-black">入院経過</p>
+        <textarea placeholder="入院経過を入力してください" class="w-full p-2 border rounded mb-4" rows="15">
+あなたは優秀な医療クラークです。
+以下の項目に従って退院サマリ用の"入院経過"を作成すること。
+あなたは退院後に記録を振り返って"入院経過"を作成しています。
+
+Rules:
+・<CONTEXT>に記載されている事実のみを使用して要約を生成してください。 <CONTEXT>に記載されていない情報は含めないでください。
+・回答結果の形式は"ですます"調ではなく、"だ。である。など"体言止めにする
+・医療従事者が内容を確認した時に時系列でどんな経緯で入院してどんな治療を受け、どのような状態でどこに退院したのかがわかるように。できるだけ医師が元々書いた文章をそのまま使うこと。
+・現病歴と既往歴と入院目的は含まず、１段落で出力すること
+・退院日を入院経過に必ず含む
+・「退院予定」などと未来形でソースに書いてあっても過去形として表現「◯月◯日に退院」
+・ 文末に「施行」という言葉が使われている場合、「行った」「投与した」「実施した」などの表現に、文脈に合った形にいい感じに直して。
+
+Process:
+Step1:入院期間中のイベントを時系列に並べる。現病歴と既往歴は含まない。
+Step2: Step1の結果を元に、"入院経過の構成"の[]に回答する
+
+#イベントの定義
+・主病名の診断のための検査の実施日と、その検査結果
+・手術の手術日と術式
+・主病名に対する薬物治療の、日付と治療内容（薬剤名、用量を含む）
+・主病名に対するその他治療の、日付と治療内容
+・病状説明（家族面談）の日付と、その内容
+
+Query: 主病に関して入院以降の治療方針と治療経過、治療方針に影響する検査結果と診断内容、主病がどのように改善されいつ退院となったか、退院先はどこか、そして家族面談内容を300文字以内で簡潔に教えて。治療の投与期間、投与量、投与詳細がある場合には含む。可能な限り日付を添えること。質問文を回答に含まないこと
+
+<Example>
+【入院経過】
+(具体的なサンプルを記載することで、生成結果が改善されます)
+</Example>
+
+        </textarea>
+
+        <div class="flex items-center justify-center mt-6">
+          <!-- 登録ボタン -->
+          <Button
+            pill
+            color="purple"
+            class="w-44 mb-3 font-semibold"
+            on:click={registerTemplate}
+          >
+            登録
+          </Button>
+          <Button
+            outline
+            pill
+            color="purple"
+            class="w-44 mb-3 font-semibold hover:bg-transparent hover:border-opacity-70 hover:text-primary-500 border-2"
+            on:click={() => {
+              popupTemplateModal = false
+              // 「新規テンプレート作成」を選んだまま閉じた場合、先頭のテンプレートに戻す
+              selectedDiseaseForPrompt = promptForDisease[0];
+            }}>閉じる</Button>
+        </div>
+      </div>
+    </Modal>
+    
+    <Modal bind:open={editTemplateModal} size="xl" outsideclose>
+      <div class="px-6 pb-6">
+        <p class="text-sm font-semibold py-4 text-black">テンプレート編集</p>
+        <Input type="text" placeholder="テンプレート名" class="mb-4" bind:value={templateToEdit} />
+        <p class="text-sm font-semibold py-4 text-black">入院経過</p>
+        <textarea
+          placeholder="入院経過を入力してください"
+          class="w-full p-2 border rounded mb-4"
+          rows="15"
+          bind:value={templateContentToEdit}></textarea>
+        <div class="flex items-center justify-center mt-6 gap-4">
+          <Button
+            pill
+            color="purple"
+            class="w-44 mb-3 font-semibold"
+            on:click={saveEditedTemplate}
+          >
+            保存
+          </Button>
+          <Button
+            outline
+            pill
+            color="red"
+            class="w-44 mb-3 font-semibold"
+            on:click={deleteEditedTemplate}
+          >
+            テンプレート削除
+          </Button>
+          <Button
+            outline
+            pill
+            color="purple"
+            class="w-44 mb-3 font-semibold"
+            on:click={() => { editTemplateModal = false; }}
+          >
+            閉じる
+          </Button>
+        </div>
+      </div>
+    </Modal>
